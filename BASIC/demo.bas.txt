@@ -1,1 +1,46 @@
-   1 ON ERROR RUN    2 PROC PrinterClose()   3 ON ERROR   10 PROC MainMenu() 898 STOP  899  ; 900 DEFPROC MainMenu()  910    PROC PrintScrDemo()  990 ENDPROC  999  ;1000 DEFPROC PrinterDemoLong()1010 PROC PrinterOpen()1020 LPRINT "Hello SpecNext Devs"1030 LLIST 1040 PROC PrinterClose()1045 ENDPROC 1049  ;1050 DEFPROC PrinterDemo()1060 PROC PrinterOpen()1070 LPRINT "PrintShop - By Stale Pixels"1080 PROC PrinterClose()1090 ENDPROC 1099  ;1100 DEFPROC PrintScrDemo()1101   PROC PrinterOpen()1102   PRINT #5, CHR$ 0;".SCR"1103   COPY "hungryhorace.scr" TO #51197   PROC PrinterClose()1198 ENDPROC 1199  ;1200 DEFPROC PrintNXIDemo()1201   PROC PrinterOpen()1202   PRINT #5, CHR$ 0;".SCR"1203   COPY "demo.nxi" TO #51297   PROC PrinterClose()1298 ENDPROC 1299  ;3800 DEFPROC PrinterOpen()3810 OPEN # 5,"D>N>TCP,192.168.42.148,65432"3820 ENDPROC 3840  ; 3850 DEFPROC PrinterClose()3860 CLOSE # 53890 ENDPROC 3899  ;9999 SAVE "/PrintShop/demo.bas"
+   1 ON ERROR RUN 
+   2 PROC PrinterClose()
+   3 ON ERROR 
+  10 PROC MainMenu()
+ 898 STOP 
+ 899  ;
+ 900 DEFPROC MainMenu() 
+ 910    PROC PrintScrDemo() 
+ 990 ENDPROC 
+ 999  ;
+1000 DEFPROC PrinterDemoLong()
+1010 PROC PrinterOpen()
+1020 LPRINT "Hello SpecNext Devs"
+1030 LLIST 
+1040 PROC PrinterClose()
+1045 ENDPROC 
+1049  ;
+1050 DEFPROC PrinterDemo()
+1060 PROC PrinterOpen()
+1070 LPRINT "PrintShop - By Stale Pixels"
+1080 PROC PrinterClose()
+1090 ENDPROC 
+1099  ;
+1100 DEFPROC PrintScrDemo()
+1101   PROC PrinterOpen()
+1102   PRINT #3, CHR$ 0;".SCR"
+1103   COPY "hungryhorace.scr" TO #5
+1197   PROC PrinterClose()
+1198 ENDPROC 
+1199  ;
+1200 DEFPROC PrintNXIDemo()
+1201   PROC PrinterOpen()
+1202   PRINT #3, CHR$ 0;".SCR"
+1203   COPY "demo.nxi" TO #5
+1297   PROC PrinterClose()
+1298 ENDPROC 
+1299  ;
+3800 DEFPROC PrinterOpen()
+3810 OPEN #3,"D>N>TCP,192.168.42.148,65432"
+3820 ENDPROC 
+3840  ; 
+3850 DEFPROC PrinterClose()
+3860 CLOSE #3
+3890 ENDPROC 
+3899  ;
+9999 SAVE "/PrintShop/demo.bas"
