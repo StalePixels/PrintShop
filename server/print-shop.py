@@ -124,12 +124,17 @@ def convert_image(image):
 def parse_arguments():
     """Parse the arguments passed to the script looking for a font file name."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('--font', type=str,
+    parser.add_argument('--font', '-f', type=str, dest='font',
                         help='Optional 1bit-mapped font (not yet used)',
-                        nargs='*')
-    parser.add_argument('--printer', default='ImageWriter',
+                        nargs='?')
+    parser.add_argument('--printer', '-p', type=str, default='ImageWriter', dest='printer',
                         help='Type of printer, default is the ImageWriter',
-                        nargs='*')
+                        choices=['ImageWriter', 'ESCpos', 'Pipsta'],
+                        nargs='?')
+    parser.add_argument('--log', '-l', type=str, default='ERROR', dest='loglevel',
+                        help='LogLevel (Default is ERROR)',
+                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+                        nargs='?')
     args = parser.parse_args()
 
     return args
