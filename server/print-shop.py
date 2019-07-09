@@ -30,10 +30,9 @@ import platform
 import struct
 import sys
 import time
-import Image
+from PIL import Image
 
-import usb.core
-import usb.util
+from escpos.printer import Usb as Escpos
 
 import socket
 
@@ -41,36 +40,13 @@ from ZXGraphics import ZXScreen, ZXImage
 from array import array
 from bitarray import bitarray
 
-# Printer commands
-SET_FONT_MODE_3 = b'\x1b!\x03'
-SET_LED_MODE = b'\x1bX\x2d'
-FEED_PAST_CUTTER = b'\n' * 5
-SELECT_SDL_GRAPHICS = b'\x1b*\x08'
-
 # USB specific constant definitions
-PIPSTA_USB_VENDOR_ID = 0x0483
-PIPSTA_USB_PRODUCT_ID = 0xA19D
-AP1400_USB_PRODUCT_ID = 0xA053
-AP1400V_USB_PRODUCT_ID = 0xA19C
-
-valid_usb_ids = {PIPSTA_USB_PRODUCT_ID, AP1400_USB_PRODUCT_ID, AP1400V_USB_PRODUCT_ID}
-
-class printer_finder(object):
-    def __call__(self, device):
-        if device.idVendor != PIPSTA_USB_VENDOR_ID:
-            return False
-
-        return True if device.idProduct in valid_usb_ids else False
+USB_VENDOR_ID = 0x0416
+USB_DEVICE_ID = 0x5011     # Zjiang POS Thermal Printer Mini 58mm USB - https://www.aliexpress.com/item/1000006163834.html
 
 
-DOTS_PER_LINE = 384
-BYTES_PER_DOT_LINE = DOTS_PER_LINE/8
-USB_BUSY = 66
-
-#import struct
 MAX_PRINTER_DOTS_PER_LINE = 384
 LOGGER = logging.getLogger('image_print.py')
-
 
 PRINT_MODE_NEW = 0              ## Waiting for a new command
 PRINT_MODE_TXT = 1              ## Printing Text
@@ -78,9 +54,6 @@ PRINT_MODE_SCR = 2              ## Printing a SCR
 PRINT_MODE_NXI = 3              ## Printing a NXI
 
 PRINT_MODE_CMD = -1             ## Processing a Command
-
-
-valid_usb_ids = {PIPSTA_USB_PRODUCT_ID, AP1400_USB_PRODUCT_ID, AP1400V_USB_PRODUCT_ID}
 
 
 def setup_logging():
@@ -98,10 +71,9 @@ def setup_logging():
     LOGGER.addHandler(file_handler)
     LOGGER.addHandler(stream_handler)
 
-
 def setup_usb():
-    """Connects to the 1st Pipsta found on the USB bus"""
-    # Find the Pipsta's specific Vendor ID and Product ID (also known as vid
+    """Connects to the 1st pritner matching the device ID the USB bus"""
+    # Find the given Vendor ID and Product ID (also known as vid
     # and pid)
     dev = usb.core.find(custom_match=printer_finder())
     if dev is None:  # if no such device is connected...
@@ -122,6 +94,7 @@ def setup_usb():
     interface_number = cfg[(0, 0)].bInterfaceNumber
     usb.util.claim_interface(dev, interface_number)
     alternate_setting = usb.control.get_interface(dev, interface_number)
+
     intf = usb.util.find_descriptor(
         cfg, bInterfaceNumber=interface_number,
         bAlternateSetting=alternate_setting)
@@ -132,6 +105,19 @@ def setup_usb():
         usb.util.endpoint_direction(e.bEndpointAddress) ==
         usb.util.ENDPOINT_OUT
     )
+
+    # get an endpoint instance
+    cfg = dev.get_active_configuration()
+    intf = cfg[(0, 0)]
+
+    ep = usb.util.find_descriptor(
+        intf,
+        # match the first OUT endpoint
+        custom_match= \
+            lambda e: \
+                usb.util.endpoint_direction(e.bEndpointAddress) == \
+                usb.util.ENDPOINT_OUT)
+
 
     if ep_out is None:  # check we have a real endpoint handle
         raise IOError('Could not find an endpoint to print to')
@@ -148,39 +134,13 @@ def convert_image(image):
 def parse_arguments():
     """Parse the arguments passed to the script looking for a font file name."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('font', help='Optional 1bit-mapped font',
+    parser.add_argument('font', help='Optional 1bit-mapped font (not yet used)',
+                        nargs='*')
+    parser.add_argument('type', help='Type of printer, default is the Pipsta',
                         nargs='*')
     args = parser.parse_args()
 
     return args
-
-def print_image(device, ep_out, data):
-    '''Reads the data and sends it a dot line at once to the printer
-    '''
-    LOGGER.debug('Start print')
-    try:
-        ep_out.write(SET_FONT_MODE_3)
-        cmd = struct.pack('3s2B', SELECT_SDL_GRAPHICS,
-                          (DOTS_PER_LINE / 8) & 0xFF,
-                          (DOTS_PER_LINE / 8) / 256)
-        # Arbitrary command length, set to minimum acceptable 24x8 dots this figure
-        # should give mm of print
-        lines = len(data) // BYTES_PER_DOT_LINE
-        for line in range(0, lines):
-            start = line * BYTES_PER_DOT_LINE
-            # intentionally +1 for slice operation below
-            end = start + BYTES_PER_DOT_LINE
-            # ...to end (end not included)
-            ep_out.write(b''.join([cmd, data[start:end]]))
-
-            res = device.ctrl_transfer(0xC0, 0x0E, 0x020E, 0, 2)
-            while res[0] == USB_BUSY:
-                time.sleep(0.01)
-                res = device.ctrl_transfer(0xC0, 0x0E, 0x020E, 0, 2)
-                LOGGER.debug('End print')
-    finally:
-        #ep_out.write(RESTORE_DARKNESS)
-        pass
 
 def main():
     """The main loop of the application.  Wrapping the code in a function
@@ -194,9 +154,7 @@ def main():
 
     args = parse_arguments()
     setup_logging()
-    usb_out, device = setup_usb()
-    usb_out.write(SET_LED_MODE + b'\x01')
-    
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((HOST,PORT))
 
@@ -284,24 +242,24 @@ def main():
                 if rotate == 1:
                     print("ROTATED IT")
                     img = img.rotate(90, 0, 1)
-                img.save("demo.png")
-                newFile = open("demo.scr", "wb")
-                newFileByteArray = bytearray(input_buffer)
-                newFile.write(newFileByteArray)
-                newFile.close()
 
                 # From http://stackoverflow.com/questions/273946/
                 # /how-do-i-resize-an-image-using-pil-and-maintain-its-aspect-ratio
-                wpercent = (DOTS_PER_LINE / float(img.size[0]))
+                wpercent = (MAX_PRINTER_DOTS_PER_LINE / float(img.size[0]))
                 hsize = int((float(img.size[1]) * float(wpercent)))
-                img = img.resize((DOTS_PER_LINE, hsize), Image.NONE)
+                img = img.resize((MAX_PRINTER_DOTS_PER_LINE, hsize), Image.NONE)
+                #
+                # print_data = convert_image(img)
+                # usb_out.write(SET_LED_MODE + b'\x00')
+                # print_image(device, usb_out, print_data)
+                # usb_out.write(FEED_PAST_CUTTER)
+                # # Ensure the LED is not in test mode
+                # usb_out.write(SET_LED_MODE + b'\x00')
 
-                print_data = convert_image(img)
-                usb_out.write(SET_LED_MODE + b'\x00')
-                print_image(device, usb_out, print_data)
-                usb_out.write(FEED_PAST_CUTTER)
-                # Ensure the LED is not in test mode
-                usb_out.write(SET_LED_MODE + b'\x00')
+                img.save("demo.png")
+
+                Epson = Escpos(0x0416, 0x5011)
+                Epson.image("demo.png", True, True, u'bitImageColumn')
 
             elif mode == PRINT_MODE_NXI:
                 screen = ZXImage()
@@ -314,26 +272,28 @@ def main():
                 if rotate == 1:
                     print("ROTATED IT")
                     img = img.rotate(90, 0, 1)
-                img.save("demo.png")
-                newFile = open("demo.scr", "wb")
-                newFileByteArray = bytearray(input_buffer)
-                newFile.write(newFileByteArray)
-                newFile.close()
 
                 # From http://stackoverflow.com/questions/273946/
                 # /how-do-i-resize-an-image-using-pil-and-maintain-its-aspect-ratio
-                wpercent = (DOTS_PER_LINE / float(img.size[0]))
+                wpercent = (MAX_PRINTER_DOTS_PER_LINE / float(img.size[0]))
                 hsize = int((float(img.size[1]) * float(wpercent)))
-                img = img.resize((DOTS_PER_LINE, hsize), Image.NONE)
+                img = img.resize((MAX_PRINTER_DOTS_PER_LINE, hsize), Image.NONE)
+                #
+                # print_data = convert_image(img)
+                # usb_out.write(SET_LED_MODE + b'\x00')
+                # print_image(device, usb_out, print_data)
+                # usb_out.write(FEED_PAST_CUTTER)
+                # # Ensure the LED is not in test mode
+                # usb_out.write(SET_LED_MODE + b'\x00')
 
-                print_data = convert_image(img)
-                usb_out.write(SET_LED_MODE + b'\x00')
-                print_image(device, usb_out, print_data)
-                usb_out.write(FEED_PAST_CUTTER)
-                # Ensure the LED is not in test mode
-                usb_out.write(SET_LED_MODE + b'\x00')
+                img.save("demo.png")
+
+                Epson = Escpos(0x0416, 0x5011)
+                Epson.image("demo.png", True, True, u'bitImageColumn')
+
     finally:
-        usb.util.dispose_resources(device)
+        #device.reset()
+        pass
 
 # Ensure that BasicPrint is ran in a stand-alone fashion (as intended) and not
 # imported as a module. Prevents accidental execution of code.

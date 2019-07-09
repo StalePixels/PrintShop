@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import Image
+from PIL import Image
 from array import array
 
 class ZXScreen:
@@ -48,7 +48,7 @@ class ZXScreen:
             for col in xrange(ZXScreen.WIDTH >> 3):
                 x = col << 3
                 byte = self.get_byte(x, y)
-                attr = self.get_attribute(x, y)
+                attr = self.__get_attribute(x, y)
                 ink = attr & 0b0111
                 paper = (attr >> 3) & 0b0111
                 bright = (attr >> 6) & 1

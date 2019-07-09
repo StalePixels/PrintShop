@@ -6,6 +6,6 @@ echo "a file: $tmpfile"
 printf '%s\0.SCR%s\15' >> $tmpfile
 cat $1 >> $tmpfile
 
-cat $tmpfile | netcat -c pippi 65432
+cat $tmpfile | netcat -c minnie 65432
 
 rm $tmpfile
