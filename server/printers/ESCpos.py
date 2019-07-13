@@ -34,7 +34,7 @@ from escpos.printer import Usb as Escpos
 
 import socket
 
-from ZXGraphics import ZXScreen, ZXImage
+from formats.ZXGraphics import ZXScreen, ZXImage
 from array import array
 from bitarray import bitarray
 
@@ -54,10 +54,11 @@ PRINT_MODE_NXI = 3              ## Printing a NXI
 PRINT_MODE_CMD = -1             ## Processing a Command
 
 
-class ZXScreen:
+class ESCpos:
     # Original parser from https://gist.github.com/alexanderk23/f459c76847d9412548f7
     WIDTH = 256
     HEIGHT = 192
+    TYPE = "ESCpos"
 
     def __init__(self):
         self.bitmap = array('B')

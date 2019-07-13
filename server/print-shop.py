@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# PrintShopPrint.py
+# print-shop.py
 #
 # Original Name - BasicPrint.py
 # Copyright (c) 2014 Able Systems Limited. All rights reserved.
@@ -33,19 +33,22 @@ from PIL import Image
 
 import socket
 
+from libs.Options import *
+
+Printer = None
+
+#Our printers
+from printers.ImageWriter import ImageWriter as ImageWriter
+from printers.ESCpos import ESCpos as ESCpos
+from printers.Pipsta import Pipsta as Pipsta
+
+#Our formats
+
 from formats.ZXGraphics import ZXScreen, ZXImage
 from array import array
 from bitarray import bitarray
 
 LOGGER = logging.getLogger('PrintShop')
-
-PRINT_MODE_NEW = 0              ## Waiting for a new command
-PRINT_MODE_TXT = 1              ## Printing Text
-PRINT_MODE_SCR = 2              ## Printing a SCR
-PRINT_MODE_NXI = 3              ## Printing a NXI
-
-PRINT_MODE_CMD = -1             ## Processing a Command
-
 
 def setup_logging():
     '''Sets up logging for the application.'''
@@ -62,59 +65,6 @@ def setup_logging():
     LOGGER.addHandler(file_handler)
     LOGGER.addHandler(stream_handler)
 
-def setup_usb():
-    """Connects to the 1st pritner matching the device ID the USB bus"""
-    # Find the given Vendor ID and Product ID (also known as vid
-    # and pid)
-    dev = usb.core.find(custom_match=printer_finder())
-    if dev is None:  # if no such device is connected...
-        raise IOError('Printer not found')  # ...report error
-
-    try:
-        dev.reset()
-
-        # Initialisation. Passing no arguments sets the configuration to the
-        # currently active configuration.
-        dev.set_configuration()
-    except usb.core.USBError as err:
-        raise IOError('Failed to configure the printer', err)
-
-    # Get a handle to the active interface
-    cfg = dev.get_active_configuration()
-
-    interface_number = cfg[(0, 0)].bInterfaceNumber
-    usb.util.claim_interface(dev, interface_number)
-    alternate_setting = usb.control.get_interface(dev, interface_number)
-
-    intf = usb.util.find_descriptor(
-        cfg, bInterfaceNumber=interface_number,
-        bAlternateSetting=alternate_setting)
-
-    ep_out = usb.util.find_descriptor(
-        intf,
-        custom_match=lambda e:
-        usb.util.endpoint_direction(e.bEndpointAddress) ==
-        usb.util.ENDPOINT_OUT
-    )
-
-    # get an endpoint instance
-    cfg = dev.get_active_configuration()
-    intf = cfg[(0, 0)]
-
-    ep = usb.util.find_descriptor(
-        intf,
-        # match the first OUT endpoint
-        custom_match= \
-            lambda e: \
-                usb.util.endpoint_direction(e.bEndpointAddress) == \
-                usb.util.ENDPOINT_OUT)
-
-
-    if ep_out is None:  # check we have a real endpoint handle
-        raise IOError('Could not find an endpoint to print to')
-
-    return ep_out, dev
-
 def convert_image(image):
     """Takes the bitmap and converts it to PIPSTA 24-bit image format"""
     imagebits = bitarray(image.getdata(), endian='big')
@@ -122,7 +72,7 @@ def convert_image(image):
     return imagebits.tobytes()
 
 def parse_arguments():
-    """Parse the arguments passed to the script looking for a font file name."""
+    """Parse the arguments passed to the script, logging, fonts, printer type, etc..."""
     parser = argparse.ArgumentParser()
     parser.add_argument('--font', '-f', type=str, dest='font',
                         help='Optional 1bit-mapped font (not yet used)',
@@ -130,6 +80,12 @@ def parse_arguments():
     parser.add_argument('--printer', '-p', type=str, default='ImageWriter', dest='printer',
                         help='Type of printer, default is the ImageWriter',
                         choices=['ImageWriter', 'ESCpos', 'Pipsta'],
+                        nargs='?')
+    parser.add_argument('--printer-width', '-p-w', type=int, default=None, dest='printer_width',
+                        help='Change default output width of printer (not supported by all printers)',
+                        nargs='?')
+    parser.add_argument('--printer-height', '-p-h', type=int, default=None, dest='printer_height',
+                        help='Change default output height of printer (not supported by all printers)',
                         nargs='?')
     parser.add_argument('--log', '-l', type=str, default='ERROR', dest='loglevel',
                         help='LogLevel (Default is ERROR)',
@@ -141,7 +97,7 @@ def parse_arguments():
 
 def main():
     """The main loop of the application.  Wrapping the code in a function
-    prevents it being executed when various tools import the code."""
+    may be useful if we ever want to librarise, and import the file elsewhere later."""
 
     # We support Python2, because that's most likely to be on the pi...
     if sys.version_info[0] != 2:
@@ -150,8 +106,19 @@ def main():
     if platform.system() != 'Linux':
         sys.exit('This script has only been written for Linux')
 
-    args = parse_arguments()
-    print('args', args)
+    opts = Options(parse_arguments())
+    setup_logging()
+
+    if opts.printer == 'ImageWriter':
+        Printer = ImageWriter(LOGGER)
+        pass
+    elif opts.printer == 'Pipsta':
+        Printer = Pipsta(LOGGER)
+        pass
+    elif opts.printer == 'ESCpos':
+        Printer = ESCpos(LOGGER)
+        pass
+
     setup_logging()
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -164,14 +131,9 @@ def main():
             conn, addr = s.accept()
             print('Connected by', addr)
 
-            # Our "default" variables, reset per connection...
-            mode = PRINT_MODE_NEW
-            size = 0
-            dither = 0
-            rotate = 0
-            cmd = ""
+            printer_opts = PrinterOptions()
 
-            # Wile the input buffer fresh...
+            # Wipe the input buffer fresh...
             input_buffer = array('B')
             while True:
                 data = conn.recv(65536)
@@ -195,11 +157,11 @@ def main():
                             elif cmd.startswith("SET"):
                                 if "dither" in cmd:
                                     print(' CMD! Enable DITHERing')
-                                    dither = 1
+                                    printer_opts.dither = 1
                                     mode = PRINT_MODE_NEW
                                 elif "rotate" in cmd:
                                     print(' CMD! Enable ROTATE')
-                                    rotate = 1
+                                    printer_opts.rotate = 1
                                     mode = PRINT_MODE_NEW
                             else:
                                 mode = PRINT_MODE_NEW                   # Wait for Next Instruction
