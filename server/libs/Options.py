@@ -18,6 +18,7 @@ class Options:
     printer_width = 256
     printer_height = 192
     printer = None
+    logfile = None
 
     def __init__(self, args):
         if args.printer_width:
@@ -26,9 +27,11 @@ class Options:
             self.printer_width = args.printer_width
         if args.printer_height:
             self.printer_height = args.printer_height
+        if args.logfile:
+            self.logfile = args.logfile
         self.printer = args.printer
 
-class PrinterOptions:
+class PrintJobOptions:
     """ """
     mode = PRINT_MODE_NEW
     size = 0

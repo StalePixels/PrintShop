@@ -50,20 +50,22 @@ from bitarray import bitarray
 
 LOGGER = logging.getLogger('PrintShop')
 
-def setup_logging():
+def setup_logging(opts):
     '''Sets up logging for the application.'''
-    LOGGER.setLevel(logging.INFO)
 
-    file_handler = logging.FileHandler('mylog.txt')
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(logging.Formatter(fmt='%(asctime)s %(message)s',
-                                                datefmt='%d/%m/%Y %H:%M:%S'))
+    LOGGER.setLevel(logging.INFO)
 
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(logging.INFO)
-
-    LOGGER.addHandler(file_handler)
     LOGGER.addHandler(stream_handler)
+
+    if opts.logfile:
+        file_handler = logging.FileHandler(opts.logfile)
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(logging.Formatter(fmt='%(asctime)s %(message)s',
+                                                    datefmt='%d/%m/%Y %H:%M:%S'))
+        LOGGER.addHandler(file_handler)
+
 
 def convert_image(image):
     """Takes the bitmap and converts it to PIPSTA 24-bit image format"""
@@ -91,6 +93,9 @@ def parse_arguments():
                         help='LogLevel (Default is ERROR)',
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                         nargs='?')
+    parser.add_argument('--logfile', '-lf', type=str, default=None, dest='logfile',
+                        help='Optional file name to write logs to',
+                        nargs='?')
     args = parser.parse_args()
 
     return args
@@ -107,7 +112,7 @@ def main():
         sys.exit('This script has only been written for Linux')
 
     opts = Options(parse_arguments())
-    setup_logging()
+    setup_logging(opts)
 
     if opts.printer == 'ImageWriter':
         Printer = ImageWriter(LOGGER)
@@ -119,8 +124,6 @@ def main():
         Printer = ESCpos(LOGGER)
         pass
 
-    setup_logging()
-
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((HOST,PORT))
 
@@ -131,7 +134,7 @@ def main():
             conn, addr = s.accept()
             print('Connected by', addr)
 
-            printer_opts = PrinterOptions()
+            job_options = PrintJobOptions(opts)
 
             # Wipe the input buffer fresh...
             input_buffer = array('B')
@@ -144,42 +147,42 @@ def main():
                     done = False
                     if mode is PRINT_MODE_CMD:                  # We're currently processing commands
                         if byte == chr(13):                              # Finish processing command
-                            print("RECV: EoCOMMAND ("+cmd+")")
+                            print("RECV: EoCOMMAND ("+job_options.cmd+")")
 
-                            if cmd == '.SCR':
-                                mode = PRINT_MODE_SCR                   # Engage SCR Printer
+                            if job_options.cmd == '.SCR':
+                                job_options.mode = PRINT_MODE_SCR                   # Engage SCR Printer
                                 print(' CMD! Enable SCR Mode')
-                                done = True
-                            elif  cmd == '.NXI':
-                                mode = PRINT_MODE_NXI                   # Engage SCR Printer
+                                job_options.done = True
+                            elif job_options.cmd == '.NXI':
+                                job_options.mode = PRINT_MODE_NXI                   # Engage SCR Printer
                                 print(' CMD! Enable NXI Mode')
-                                done = True
-                            elif cmd.startswith("SET"):
+                                job_options.done = True
+                            elif job_options.cmd.startswith("SET"):
                                 if "dither" in cmd:
                                     print(' CMD! Enable DITHERing')
-                                    printer_opts.dither = 1
-                                    mode = PRINT_MODE_NEW
+                                    job_options.dither = 1
+                                    job_options.mode = PRINT_MODE_NEW
                                 elif "rotate" in cmd:
                                     print(' CMD! Enable ROTATE')
-                                    printer_opts.rotate = 1
-                                    mode = PRINT_MODE_NEW
+                                    job_options.job_options.rotate = 1
+                                    job_options.mode = PRINT_MODE_NEW
                             else:
-                                mode = PRINT_MODE_NEW                   # Wait for Next Instruction
+                                job_options.mode = PRINT_MODE_NEW                   # Wait for Next Instruction
 
-                            cmd = ""
+                            job_options.cmd = ""
                         else:
-                            cmd = cmd + byte
+                            job_options.cmd = job_options.cmd + byte
 
                     elif not mode:                              # First Packet -- decide how to proceed
                         if byte == chr(0):
                             print(' CMD! Enable Command Mode')
-                            mode = PRINT_MODE_CMD               # Command Mode
+                            job_options.mode = PRINT_MODE_CMD               # Command Mode
                         else:
                             print('RECV: Detected Plain Text File')
-                            mode = PRINT_MODE_TXT               # Classic Printer Mode
+                            job_options.mode = PRINT_MODE_TXT               # Classic Printer Mode
 
-                    if not done:
-                        if mode == PRINT_MODE_TXT:                          # Classic Textmode Printer
+                    if not job_options.done:
+                        if job_options.mode == PRINT_MODE_TXT:                          # Classic Textmode Printer
                             # Print a char at a time and check the printers buffer isn't full
                             usb_out.write(byte)    # write all the data to the USB OUT endpoint
                             #
@@ -190,7 +193,7 @@ def main():
                         elif mode == PRINT_MODE_SCR \
                             or mode == PRINT_MODE_NXI:                      # .FILE appendnd to buffer
                             input_buffer.append(ord(byte))
-                    size = size + 1
+                    job_options.size = job_options.size + 1
 
             print("DIAG: Total Size "+size.__str__()+"bytes, input_buffer "+input_buffer.__len__().__str__())
 
