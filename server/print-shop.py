@@ -130,41 +130,41 @@ def main():
             # Wipe the input buffer fresh...
             input_buffer = array('B')
             while True:
-                data = conn.recv(65536)
+                data = conn.recv(65536)                                     # 64k buffer
                 if not data:
                     break
 
                 for byte in data:
-                    done = False
-                    if mode is PRINT_MODE_CMD:                  # We're currently processing commands
-                        if byte == chr(13):                              # Finish processing command
+                    job_options.done = False
+                    if job_options.mode is PRINT_MODE_CMD:                  # We're currently processing commands
+                        if byte == chr(13):                                 # Finish processing command
                             print("RECV: EoCOMMAND ("+job_options.cmd+")")
 
                             if job_options.cmd == '.SCR':
-                                job_options.mode = PRINT_MODE_SCR                   # Engage SCR Printer
+                                job_options.mode = PRINT_MODE_SCR           # Engage SCR Printer
                                 print(' CMD! Enable SCR Mode')
                                 job_options.done = True
                             elif job_options.cmd == '.NXI':
-                                job_options.mode = PRINT_MODE_NXI                   # Engage SCR Printer
+                                job_options.mode = PRINT_MODE_NXI           # Engage SCR Printer
                                 print(' CMD! Enable NXI Mode')
                                 job_options.done = True
                             elif job_options.cmd.startswith("SET"):
-                                if "dither" in cmd:
+                                if "dither" in job_options.cmd:
                                     print(' CMD! Enable DITHERing')
                                     job_options.dither = 1
                                     job_options.mode = PRINT_MODE_NEW
-                                elif "rotate" in cmd:
+                                elif "rotate" in job_options.cmd:
                                     print(' CMD! Enable ROTATE')
-                                    job_options.job_options.rotate = 1
+                                    job_options.rotate = 1
                                     job_options.mode = PRINT_MODE_NEW
                             else:
-                                job_options.mode = PRINT_MODE_NEW                   # Wait for Next Instruction
+                                job_options.mode = PRINT_MODE_NEW           # Wait for Next Instruction
 
                             job_options.cmd = ""
                         else:
                             job_options.cmd = job_options.cmd + byte
 
-                    elif not mode:                              # First Packet -- decide how to proceed
+                    elif not job_options.mode:                              # First Packet -- decide how to proceed
                         if byte == chr(0):
                             print(' CMD! Enable Command Mode')
                             job_options.mode = PRINT_MODE_CMD               # Command Mode
@@ -173,21 +173,18 @@ def main():
                             job_options.mode = PRINT_MODE_TXT               # Classic Printer Mode
 
                     if not job_options.done:
-                        if job_options.mode == PRINT_MODE_TXT:                          # Classic Textmode Printer
+                        if job_options.mode == PRINT_MODE_TXT:              # Classic Textmode Printer
+
                             # Print a char at a time and check the printers buffer isn't full
-                            usb_out.write(byte)    # write all the data to the USB OUT endpoint
-                            #
-                            res = device.ctrl_transfer(0xC0, 0x0E, 0x020E, 0, 2)
-                            while res[0] == USB_BUSY:
-                               time.sleep(0.01)
-                               res = device.ctrl_transfer(0xC0, 0x0E, 0x020E, 0, 2)
-                        elif mode == PRINT_MODE_SCR \
-                            or mode == PRINT_MODE_NXI:                      # .FILE appendnd to buffer
+                            Printer.text(byte)                              # write all the data to the USB OUT endpoint
+
+                        elif job_options.mode == PRINT_MODE_SCR \
+                            or job_options.mode == PRINT_MODE_NXI:          # .FILE appendnd to buffer
                             input_buffer.append(ord(byte))
                     job_options.size = job_options.size + 1
 
-            print("DIAG: Total Size "+size.__str__()+"bytes, input_buffer "+input_buffer.__len__().__str__())
-
+            print("DIAG: Total Size "+job_options.size.__str__() +
+                  "bytes, input_buffer "+input_buffer.__len__().__str__())
     finally:
         #device.reset()
         pass

@@ -89,7 +89,7 @@ class ImageWriter:
             # Epson.image("demo.png", True, True, u'bitImageColumn')
 
     def text(self, text):
-        print(text)
+        print("text: "+text)
 
     def image(self, img):
         """Write the PILlow Image (img) to disk."""

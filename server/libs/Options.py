@@ -38,6 +38,7 @@ class PrintJobOptions:
     dither = 0
     rotate = 0
     cmd = ""
+    done = False
 
     def __init__(self, args):
         """ """
