@@ -2,10 +2,10 @@
 #
 # print-shop.py
 #
-# Original Name - BasicPrint.py
+# Original Code - BasicPrint.py for Pipsta
 # Copyright (c) 2014 Able Systems Limited. All rights reserved.
 #
-# Modified by Garry Lancaster 2019 to perform as a simple wifi print server
+# Concept by Garry Lancaster 2019 - be a simple wifi print server
 # on port 65432 for the ZX Spectrum Next.
 #
 # Modified by D. 'Xalior' Rimron-Soutter 2019 to perform as a slightly more
@@ -29,24 +29,21 @@ import logging
 import platform
 import sys
 import time
+import socket
+from array import array
+from bitarray import bitarray
+
 from PIL import Image
 
-import socket
-
+# Our CONSTS and Configs
 from libs.Options import *
-
-Printer = None
 
 #Our printers
 from printers.ImageWriter import ImageWriter as ImageWriter
 from printers.ESCpos import ESCpos as ESCpos
 from printers.Pipsta import Pipsta as Pipsta
 
-#Our formats
-
-from formats.ZXGraphics import ZXScreen, ZXImage
-from array import array
-from bitarray import bitarray
+Printer = 'ImageWriter'
 
 LOGGER = logging.getLogger('PrintShop')
 
@@ -67,20 +64,14 @@ def setup_logging(opts):
         LOGGER.addHandler(file_handler)
 
 
-def convert_image(image):
-    """Takes the bitmap and converts it to PIPSTA 24-bit image format"""
-    imagebits = bitarray(image.getdata(), endian='big')
-    imagebits.invert()
-    return imagebits.tobytes()
-
 def parse_arguments():
     """Parse the arguments passed to the script, logging, fonts, printer type, etc..."""
     parser = argparse.ArgumentParser()
     parser.add_argument('--font', '-f', type=str, dest='font',
                         help='Optional 1bit-mapped font (not yet used)',
                         nargs='?')
-    parser.add_argument('--printer', '-p', type=str, default='ImageWriter', dest='printer',
-                        help='Type of printer, default is the ImageWriter',
+    parser.add_argument('--printer', '-p', type=str, default=Printer, dest='printer',
+                        help='Type of printer, default is the '+Printer,
                         choices=['ImageWriter', 'ESCpos', 'Pipsta'],
                         nargs='?')
     parser.add_argument('--printer-width', '-p-w', type=int, default=None, dest='printer_width',
@@ -196,66 +187,6 @@ def main():
                     job_options.size = job_options.size + 1
 
             print("DIAG: Total Size "+size.__str__()+"bytes, input_buffer "+input_buffer.__len__().__str__())
-
-            if mode == PRINT_MODE_SCR:
-                screen = ZXScreen()
-                screen.parse(input_buffer)
-                if dither == 0:
-                    img = screen.mono()
-                else:
-                    img = screen.dither()
-                print(rotate)
-                if rotate == 1:
-                    print("ROTATED IT")
-                    img = img.rotate(90, 0, 1)
-
-                # From http://stackoverflow.com/questions/273946/
-                # /how-do-i-resize-an-image-using-pil-and-maintain-its-aspect-ratio
-                wpercent = (MAX_PRINTER_DOTS_PER_LINE / float(img.size[0]))
-                hsize = int((float(img.size[1]) * float(wpercent)))
-                img = img.resize((MAX_PRINTER_DOTS_PER_LINE, hsize), Image.NONE)
-                #
-                # print_data = convert_image(img)
-                # usb_out.write(SET_LED_MODE + b'\x00')
-                # print_image(device, usb_out, print_data)
-                # usb_out.write(FEED_PAST_CUTTER)
-                # # Ensure the LED is not in test mode
-                # usb_out.write(SET_LED_MODE + b'\x00')
-
-                img.save("demo.png")
-
-                Epson = Escpos(0x0416, 0x5011)
-                Epson.image("demo.png", True, True, u'bitImageColumn')
-
-            elif mode == PRINT_MODE_NXI:
-                screen = ZXImage()
-                screen.parse(input_buffer)
-                if dither == 0:
-                    img = screen.mono()
-                else:
-                    img = screen.dither()
-                print(rotate)
-                if rotate == 1:
-                    print("ROTATED IT")
-                    img = img.rotate(90, 0, 1)
-
-                # From http://stackoverflow.com/questions/273946/
-                # /how-do-i-resize-an-image-using-pil-and-maintain-its-aspect-ratio
-                wpercent = (MAX_PRINTER_DOTS_PER_LINE / float(img.size[0]))
-                hsize = int((float(img.size[1]) * float(wpercent)))
-                img = img.resize((MAX_PRINTER_DOTS_PER_LINE, hsize), Image.NONE)
-                #
-                # print_data = convert_image(img)
-                # usb_out.write(SET_LED_MODE + b'\x00')
-                # print_image(device, usb_out, print_data)
-                # usb_out.write(FEED_PAST_CUTTER)
-                # # Ensure the LED is not in test mode
-                # usb_out.write(SET_LED_MODE + b'\x00')
-
-                img.save("demo.png")
-
-                Epson = Escpos(0x0416, 0x5011)
-                Epson.image("demo.png", True, True, u'bitImageColumn')
 
     finally:
         #device.reset()

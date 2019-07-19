@@ -99,7 +99,6 @@ class Pipsta:
         LOGGER.addHandler(file_handler)
         LOGGER.addHandler(stream_handler)
 
-
     def setup_usb():
         """Connects to the 1st Pipsta found on the USB bus"""
         # Find the Pipsta's specific Vendor ID and Product ID (also known as vid
