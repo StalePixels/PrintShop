@@ -36,7 +36,7 @@ from bitarray import bitarray
 from PIL import Image
 
 # Our CONSTS and Configs
-from libs.Options import *
+from includes.Options import *
 
 #Our printers
 from printers.ImageWriter import ImageWriter as ImageWriter

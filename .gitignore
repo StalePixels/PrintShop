@@ -1,3 +1,7 @@
 .idea
 ._*
 *.pyc
+/server/bin/
+/server/include/
+/server/lib/
+/server/local/
