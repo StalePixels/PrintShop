@@ -27,7 +27,7 @@ class ImageWriter:
     def __init__(self, logger):
         self.LOGGER = logger
 
-    def _process(self, input_buffer, opts):
+    def print(self, input_buffer, opts):
         if opts.mode == PRINT_MODE_SCR:
             screen = ZXScreen()
             screen.parse(input_buffer)
@@ -88,10 +88,10 @@ class ImageWriter:
             # Epson = Escpos(0x0416, 0x5011)
             # Epson.image("demo.png", True, True, u'bitImageColumn')
 
-    def text(self, text):
+    def _text(self, text, opts):
         print("text: "+text)
 
-    def image(self, img):
+    def _image(self, img, opts):
         """Write the PILlow Image (img) to disk."""
         img.save("demo.png")
 

@@ -137,6 +137,8 @@ def main():
                 for byte in data:
                     job_options.done = False
                     if job_options.mode is PRINT_MODE_CMD:                  # We're currently processing commands
+
+                        # Start CMD processing
                         if byte == chr(13):                                 # Finish processing command
                             print("RECV: EoCOMMAND ("+job_options.cmd+")")
 
@@ -145,7 +147,7 @@ def main():
                                 print(' CMD! Enable SCR Mode')
                                 job_options.done = True
                             elif job_options.cmd == '.NXI':
-                                job_options.mode = PRINT_MODE_NXI           # Engage SCR Printer
+                                job_options.mode = PRINT_MODE_NXI           # Engage NXI Printer
                                 print(' CMD! Enable NXI Mode')
                                 job_options.done = True
                             elif job_options.cmd.startswith("SET"):
@@ -185,6 +187,8 @@ def main():
 
             print("DIAG: Total Size "+job_options.size.__str__() +
                   "bytes, input_buffer "+input_buffer.__len__().__str__())
+
+            Printer.print(input_buffer, job_options)
     finally:
         #device.reset()
         pass
