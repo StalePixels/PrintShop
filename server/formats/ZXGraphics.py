@@ -116,21 +116,6 @@ class ZXImage:
         return self.bitmap[ self._get_pixel_address(x,y) ]
 
     def _mono(self):
-        print("TODO - impliment dither options")
-        # img = Image.new('RGB', (ZXScreen.WIDTH, ZXScreen.HEIGHT), 'white')
-        # pixels = img.load()
-        # for y in xrange(ZXScreen.HEIGHT):
-        #     for col in xrange(ZXScreen.WIDTH >> 3):
-        #         x = col << 3
-        #         byte = self.get_byte(x, y)
-        #         attr = self.get_attribute(x, y)
-        #         ink = attr & 0b0111
-        #         paper = (attr >> 3) & 0b0111
-        #         bright = (attr >> 6) & 1
-        #         val = 0xcd if not bright else 0xff
-        #         color = ink if bit_is_set else paper
-        #         rgb = tuple(val * (color >> i & 1) for i in (1,2,0))
-        #         pixels[x, y] = rgb
         return self._colour().convert("1")
 
     def _colour(self):

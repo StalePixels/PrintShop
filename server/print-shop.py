@@ -107,13 +107,10 @@ def main():
 
     if opts.printer == 'ImageWriter':
         Printer = ImageWriter(LOGGER)
-        pass
     elif opts.printer == 'Pipsta':
         Printer = Pipsta(LOGGER)
-        pass
     elif opts.printer == 'ESCpos':
         Printer = ESCpos(LOGGER)
-        pass
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((HOST,PORT))

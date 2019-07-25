@@ -60,10 +60,6 @@ class ESCpos:
     HEIGHT = 192
     TYPE = "ESCpos"
 
-    def __init__(self):
-        self.bitmap = array('B')
-        self.attributes = array('B')
-
     def setup_logging():
         '''Sets up logging for the application.'''
         LOGGER.setLevel(logging.INFO)
