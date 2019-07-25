@@ -6,6 +6,6 @@ echo "a file: $tmpfile"
 printf '%s\0.NXI%s\15' >> $tmpfile
 cat $1 >> $tmpfile
 
-netcat minnie 65432 < $tmpfile
+netcat mickey 65432 < $tmpfile
 
 rm $tmpfile

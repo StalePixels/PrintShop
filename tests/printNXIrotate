@@ -7,6 +7,6 @@ printf '%s\0SET rotate%s\15' >> $tmpfile
 printf '%s\0.NXI%s\15' >> $tmpfile
 cat $1 >> $tmpfile
 
-netcat pippi 65432 < $tmpfile
+netcat mickey 65432 < $tmpfile
 
 rm $tmpfile
