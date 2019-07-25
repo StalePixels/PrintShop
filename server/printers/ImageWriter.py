@@ -36,27 +36,19 @@ class ImageWriter:
 
             img = processor.process()
 
-            print (opts.rotate)
             if opts.rotate:
-                print("ROTATE TIME")
                 img = img.rotate(-90, 0, 1)
 
             # Resize image, but maintain aspect ratio...
 
             if opts.rotate:
-                print("RotResized")
                 wpercent = (MAX_PRINTER_DOTS_PER_LINE / float(processor.HEIGHT))
                 hsize = int((float(processor.WIDTH) * float(wpercent)))
             else:
-                print("NotRotResized")
                 wpercent = (MAX_PRINTER_DOTS_PER_LINE / float(processor.WIDTH))
                 hsize = int((float(processor.HEIGHT) * float(wpercent)))
 
-            print(MAX_PRINTER_DOTS_PER_LINE, hsize)
-
             img = img.resize((MAX_PRINTER_DOTS_PER_LINE, hsize), Image.NEAREST)
-
-            print(img)
 
             # Dither after resizing, so we get smaller stipling...
             if opts.dither:
