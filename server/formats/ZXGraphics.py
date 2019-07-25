@@ -4,7 +4,6 @@ from PIL import Image
 from array import array
 
 class ZXScreen:
-    # Original parser from https://gist.github.com/alexanderk23/f459c76847d9412548f7
     WIDTH = 256
     HEIGHT = 192
 
@@ -84,6 +83,7 @@ class ZXImage:
     HEIGHT = 192
 
     def __init__(self):
+        self.hasPalette = False
         self.palette = array('B')
         self.bitmap = array('B')
 
@@ -94,12 +94,19 @@ class ZXImage:
         #     self.bitmap.fromfile(f, 6144)
         #     self.attributes.fromfile(f, 768)
 
-    def parse(self, s):
+    def store(self, s):
         if s.__len__()==49152:
             self.bitmap.fromstring(s)
         else:
+            self.hasPalette = True
             self.palette.fromstring(s[:512])
             self.bitmap.fromstring(s[49152:])
+
+    def process(self, mono=False):
+        if mono:
+            return self._mono()
+        else:
+            return self._colour()
 
     def _get_pixel_address(self, x, y):
         address = (y * 256) + x
@@ -108,7 +115,7 @@ class ZXImage:
     def _get_byte(self, x, y):
         return self.bitmap[ self._get_pixel_address(x,y) ]
 
-    def colour(self):
+    def _mono(self):
         print("TODO - impliment dither options")
         # img = Image.new('RGB', (ZXScreen.WIDTH, ZXScreen.HEIGHT), 'white')
         # pixels = img.load()
@@ -124,17 +131,16 @@ class ZXImage:
         #         color = ink if bit_is_set else paper
         #         rgb = tuple(val * (color >> i & 1) for i in (1,2,0))
         #         pixels[x, y] = rgb
-        return img.convert("1")
+        return self._colour().convert("1")
 
-    def mono(self):
+    def _colour(self):
         img = Image.new('RGB', (ZXScreen.WIDTH, ZXScreen.HEIGHT), 'white')
         pixels = img.load()
         for y in xrange(ZXScreen.HEIGHT):
             for x in xrange(ZXScreen.WIDTH):
                 byte = self.get_byte(x, y)
                 pixels[x, y] = tuple([(byte >> 5) << 5, ((byte>>3) & 7) << 5, (byte & 3) << 5])
-        img.save("mono.png")
-        return img.convert("1")
+        return img
 
 if __name__ == '__main__':
     pass

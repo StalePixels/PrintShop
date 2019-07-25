@@ -61,14 +61,14 @@ class ImageWriter:
         if opts.dither:
             img = img.convert("1")
 
-        img.save("PrintShop-"+datetime.now().strftime("%Y%m%d%H%M%S")+".png")
+        self._save(img, opts)
 
     def _text(self, text, opts):
         print("text: "+text)
 
-    def _image(self, img, opts):
+    def _save(self, img, opts):
         """Write the PILlow Image (img) to disk."""
-        img.save("demo.png")
+        img.save("PrintShop-"+datetime.now().strftime("%Y%m%d%H%M%S")+".png")
 
 # Trap running this by itself
 if __name__ == '__main__':
