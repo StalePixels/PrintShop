@@ -33,61 +33,35 @@ class ImageWriter:
     def print(self, input_buffer, opts):
         if opts.mode == PRINT_MODE_SCR:
             processor = ZXScreen()
-            processor.store(input_buffer)
-
-            processor.dither = opts.dither
-
-            img = processor.process()
-
-            if opts.rotate:
-                img = img.rotate(-90, 0, 1)
-
-            # Resize image, but maintain aspect ratio...
-
-            if opts.rotate:
-                wpercent = (MAX_PRINTER_DOTS_PER_LINE / float(processor.HEIGHT))
-                hsize = int((float(processor.WIDTH) * float(wpercent)))
-            else:
-                wpercent = (MAX_PRINTER_DOTS_PER_LINE / float(processor.WIDTH))
-                hsize = int((float(processor.HEIGHT) * float(wpercent)))
-
-            img = img.resize((MAX_PRINTER_DOTS_PER_LINE, hsize), Image.NEAREST)
-
-            # Dither after resizing, so we get smaller stipling...
-            if opts.dither:
-                img = img.convert("1")
-
-            img.save("PrintShop-"+datetime.now().strftime("%Y%m%d%H%M%S")+".png")
 
         elif opts.mode == PRINT_MODE_NXI:
-            screen = ZXImage()
-            screen.parse(input_buffer)
-            if opts.dither == 0:
-                img = screen.mono()
-            else:
-                img = screen.dither()
-            print(opts.rotate)
-            if opts.rotate == 1:
-                print("ROTATED IT")
-                img = img.rotate(90, 0, 1)
+            processor = ZXImage()
 
-            # From http://stackoverflow.com/questions/273946/
-            # /how-do-i-resize-an-image-using-pil-and-maintain-its-aspect-ratio
-            wpercent = (MAX_PRINTER_DOTS_PER_LINE / float(img.size[0]))
-            hsize = int((float(img.size[1]) * float(wpercent)))
-            img = img.resize((MAX_PRINTER_DOTS_PER_LINE, hsize), Image.NONE)
-            #
-            # print_data = convert_image(img)
-            # usb_out.write(SET_LED_MODE + b'\x00')
-            # print_image(device, usb_out, print_data)
-            # usb_out.write(FEED_PAST_CUTTER)
-            # # Ensure the LED is not in test mode
-            # usb_out.write(SET_LED_MODE + b'\x00')
+        processor.store(input_buffer)
 
-            img.save("demo.png")
+        processor.dither = opts.dither
 
-            # Epson = Escpos(0x0416, 0x5011)
-            # Epson.image("demo.png", True, True, u'bitImageColumn')
+        img = processor.process()
+
+        if opts.rotate:
+            img = img.rotate(-90, 0, 1)
+
+        # Resize image, but maintain aspect ratio...
+
+        if opts.rotate:
+            wpercent = (MAX_PRINTER_DOTS_PER_LINE / float(processor.HEIGHT))
+            hsize = int((float(processor.WIDTH) * float(wpercent)))
+        else:
+            wpercent = (MAX_PRINTER_DOTS_PER_LINE / float(processor.WIDTH))
+            hsize = int((float(processor.HEIGHT) * float(wpercent)))
+
+        img = img.resize((MAX_PRINTER_DOTS_PER_LINE, hsize), Image.NEAREST)
+
+        # Dither after resizing, so we get smaller stipling...
+        if opts.dither:
+            img = img.convert("1")
+
+        img.save("PrintShop-"+datetime.now().strftime("%Y%m%d%H%M%S")+".png")
 
     def _text(self, text, opts):
         print("text: "+text)
