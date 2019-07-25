@@ -138,8 +138,18 @@ class ZXImage:
         pixels = img.load()
         for y in xrange(ZXScreen.HEIGHT):
             for x in xrange(ZXScreen.WIDTH):
-                byte = self.get_byte(x, y)
-                pixels[x, y] = tuple([(byte >> 5) << 5, ((byte>>3) & 7) << 5, (byte & 3) << 5])
+                byte = self._get_byte(x, y)
+                r = (byte & 224)
+                g = (byte & 28) << 3
+                b = (byte & 3) << 6
+                if r>0:
+                    r = r + 31
+                if g>0:
+                    g = g + 31
+                if b>0:
+                    b = b + 63
+                col = tuple([r, g, b])
+                pixels[x, y] = col
         return img
 
 if __name__ == '__main__':
