@@ -5,6 +5,9 @@
 from __future__ import print_function
 from formats.ZXGraphics import ZXScreen, ZXImage
 from PIL import Image
+from datetime import datetime
+
+from datetime import datetime
 
 from libs.Options import *
 
@@ -54,7 +57,7 @@ class ImageWriter:
             if opts.dither:
                 img = img.convert("1")
 
-            img.save("demo.png")
+            img.save("PrintShop-"+datetime.now().strftime("%Y%m%d%H%M%S")+".png")
 
         elif opts.mode == PRINT_MODE_NXI:
             screen = ZXImage()
