@@ -153,11 +153,11 @@ def main():
                             elif job_options.cmd.startswith("SET"):
                                 if "dither" in job_options.cmd:
                                     print(' CMD! Enable DITHERing')
-                                    job_options.dither = 1
+                                    job_options.dither = True
                                     job_options.mode = PRINT_MODE_NEW
                                 elif "rotate" in job_options.cmd:
                                     print(' CMD! Enable ROTATE')
-                                    job_options.rotate = 1
+                                    job_options.rotate = True
                                     job_options.mode = PRINT_MODE_NEW
                             else:
                                 job_options.mode = PRINT_MODE_NEW           # Wait for Next Instruction

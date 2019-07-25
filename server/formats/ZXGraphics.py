@@ -18,36 +18,43 @@ class ZXScreen:
             self.bitmap.fromfile(f, 6144)
             self.attributes.fromfile(f, 768)
 
-    def parse(self, s):
+    def store(self, s):
         self.bitmap.fromstring(s[:6144])
         self.attributes.fromstring(s[6144:])
 
-    def get_pixel_address(self, x, y):
+    def process(self, mono=False):
+        if mono:
+            return self._mono()
+        else:
+            return self._colour()
+
+    def _get_pixel_address(self, x, y):
         y76 = y & 0b11000000 # third of screen
         y53 = y & 0b00111000
         y20 = y & 0b00000111
         address = (y76 << 5) + (y20 << 8) + (y53 << 2) + (x >> 3)
         return address
 
-    def get_attribute_address(self, x, y):
+    def _get_attribute_address(self, x, y):
         y73 = y & 0b11111000
         address = (y73 << 2) + (x >> 3)
         return address
 
-    def get_byte(self, x, y):
-        return self.bitmap[ self.get_pixel_address(x,y) ]
+    def _get_byte(self, x, y):
+        return self.bitmap[ self._get_pixel_address(x,y) ]
 
     #'Private' method
     def __get_attribute(self, x, y):
-        return self.attributes[ self.get_attribute_address(x,y) ]
+        return self.attributes[ self._get_attribute_address(x,y) ]
 
-    def dither(self):
+
+    def _colour(self):
         img = Image.new('RGB', (ZXScreen.WIDTH, ZXScreen.HEIGHT), 'white')
         pixels = img.load()
         for y in xrange(ZXScreen.HEIGHT):
             for col in xrange(ZXScreen.WIDTH >> 3):
                 x = col << 3
-                byte = self.get_byte(x, y)
+                byte = self._get_byte(x, y)
                 attr = self.__get_attribute(x, y)
                 ink = attr & 0b0111
                 paper = (attr >> 3) & 0b0111
@@ -58,16 +65,15 @@ class ZXScreen:
                     color = ink if bit_is_set else paper
                     rgb = tuple(val * (color >> i & 1) for i in (1,2,0))
                     pixels[x + bit, y] = rgb
-        return img.convert("1")
+        return img
 
-    def mono(self):
+    def _mono(self):
         img = Image.new('RGB', (ZXScreen.WIDTH, ZXScreen.HEIGHT), 'white')
         pixels = img.load()
         for y in xrange(ZXScreen.HEIGHT):
             for col in xrange(ZXScreen.WIDTH >> 3):
                 x = col << 3
                 byte = self.get_byte(x, y)
-                attr = self.__get_attribute(x, y)
                 for bit in xrange(8):
                     bit_is_set = (byte >> (7 - bit)) & 1
                     pixels[x + bit, y] = tuple([255,255,255]) if bit_is_set else 0
@@ -95,14 +101,14 @@ class ZXImage:
             self.palette.fromstring(s[:512])
             self.bitmap.fromstring(s[49152:])
 
-    def get_pixel_address(self, x, y):
+    def _get_pixel_address(self, x, y):
         address = (y * 256) + x
         return address
 
-    def get_byte(self, x, y):
-        return self.bitmap[ self.get_pixel_address(x,y) ]
+    def _get_byte(self, x, y):
+        return self.bitmap[ self._get_pixel_address(x,y) ]
 
-    def dither(self):
+    def colour(self):
         print("TODO - impliment dither options")
         # img = Image.new('RGB', (ZXScreen.WIDTH, ZXScreen.HEIGHT), 'white')
         # pixels = img.load()

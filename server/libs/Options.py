@@ -35,8 +35,8 @@ class PrintJobOptions:
     """ """
     mode = PRINT_MODE_NEW
     size = 0
-    dither = 0
-    rotate = 0
+    dither = False
+    rotate = False
     cmd = ""
     done = False
 
