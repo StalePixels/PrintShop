@@ -39,5 +39,5 @@ class ImageWriter(DummyPrinter):
 
 # Trap running this by itself
 if __name__ == '__main__':
-    print("Nope")
+    raise SystemExit
 
