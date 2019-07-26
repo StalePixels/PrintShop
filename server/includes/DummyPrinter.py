@@ -30,11 +30,16 @@ class DummyPrinter:
         self.LOGGER = logger
 
     def print(self, input_buffer, opts):
+
         if opts.mode == PRINT_MODE_SCR:
             processor = ZXScreen()
 
         elif opts.mode == PRINT_MODE_NXI:
             processor = ZXImage()
+
+        else:
+            # Is text, pass it back
+            return input_buffer
 
         # Load the image data into the processor
         processor.store(input_buffer)
@@ -67,11 +72,21 @@ class DummyPrinter:
         return img
 
     def _print_text(self, text, opts):
-        print("text: "+text)
+        """
+        This does nothing in a dummy instance...
+
+        You should send this text (text) one or mor charaters, to the printer
+        and expect more text to follow...
+        """
+        raise BaseException
 
     def _print_image(self, img, opts):
-        """This does nothing in a dummy instance..."""
-        raise Exception
+        """
+        This does nothing in a dummy instance...
+
+        You should send this image (img) to the printer
+        """
+        raise BaseException
 
 # Trap running this by itself
 if __name__ == '__main__':

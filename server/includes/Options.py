@@ -19,6 +19,7 @@ class Options:
     printer_height = 192
     printer = None
     logfile = None
+    temppath = "/tmp"
 
     def __init__(self, args):
         if args.printer_width:
@@ -39,10 +40,11 @@ class PrintJobOptions:
     rotate = False
     cmd = ""
     done = False
+    args = None
 
     def __init__(self, args):
         """ """
-        pass
+        self.args = args
 
 # Ensure that BasicPrint is ran in a stand-alone fashion (as intended) and not
 # imported as a module. Prevents accidental execution of code.

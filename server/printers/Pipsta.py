@@ -5,13 +5,12 @@
 from __future__ import print_function
 
 import struct
-
 import usb.core
 import usb.util
 
-from includes.DummyPrinter import DummyPrinter
-
 from bitarray import bitarray
+
+from includes.DummyPrinter import DummyPrinter
 
 '''
 Pipsta driver is provided as-is, and is for demonstration
@@ -70,14 +69,14 @@ class Pipsta(DummyPrinter):
             cfg, bInterfaceNumber=interface_number,
             bAlternateSetting=alternate_setting)
 
-        self._ep_out = usb.util.find_descriptor(
+        self.PipstaUSBEndpoint = usb.util.find_descriptor(
             intf,
             custom_match=lambda e:
             usb.util.endpoint_direction(e.bEndpointAddress) ==
             usb.util.ENDPOINT_OUT
         )
 
-        if self._ep_out is None:  # check we have a real endpoint handle
+        if self.PipstaUSBEndpoint is None:  # check we have a real endpoint handle
             raise IOError('Could not find an the Pipsta endpoint to print to')
 
     def print(self, input_buffer, opts):
@@ -93,7 +92,7 @@ class Pipsta(DummyPrinter):
         data.invert()
         data.tobytes()
 
-        self._ep_out.write(PIPSTA_SET_FONT_MODE_3)
+        self.PipstaUSBEndpoint.write(PIPSTA_SET_FONT_MODE_3)
         cmd = struct.pack('3s2B', PIPSTA_SELECT_SDL_GRAPHICS,
                           (self.MAX_PRINTER_DOTS_PER_LINE / 8) & 0xFF,
                           (self.MAX_PRINTER_DOTS_PER_LINE / 8) / 256)
@@ -103,7 +102,7 @@ class Pipsta(DummyPrinter):
             # intentionally +1 for slice operation below
             end = start + (self.MAX_PRINTER_DOTS_PER_LINE / 8)
             # ...to end (end not included)
-            self._ep_out.write(b''.join([cmd, data[start:end]]))
+            self.PipstaUSBEndpoint.write(b''.join([cmd, data[start:end]]))
 
 
 # Ensure that Pipsta is never ran in a stand-alone fashion (as intended)

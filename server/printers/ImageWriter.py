@@ -3,6 +3,7 @@
 # ImageWriter.py
 #
 from __future__ import print_function
+
 from datetime import datetime
 
 from includes.Options import *
@@ -22,12 +23,27 @@ class ImageWriter(DummyPrinter):
     MAX_PRINTER_DOTS_PER_LINE = 1024
     TYPE = "ImageWriter"
 
+    def __init__(self, logger):
+        DummyPrinter.__init__(self,logger)
+        # If you had some network, or physical connection to set up this would be the place to do it and
+        # bail if the printer can't be found, etc...
+        #
+        # We have none of that, making this proc pointless, since the super does all our work, but I've left
+        # it in so there's somewhere to put this comment ;-)
+        #                                                                       -Xalior
+
     def print(self, input_buffer, opts):
-        img = DummyPrinter.print(self, input_buffer, opts)
-        self._print_image(img, opts)
+        printjob = DummyPrinter.print(self, input_buffer, opts)
+        # If we want to do any further manipulation of the "printjob" now is the time
+        # You can inspect opts.mode if you want to see what kind of payload this is...
+        if opts.mode == PRINT_MODE_TXT:
+            self._print_text(printjob, opts)
+        else:
+            self._print_image(printjob, opts)
 
     def _text(self, text, opts):
         print("text: "+text)
+        raise Exception
 
     def _print_image(self, img, opts):
         """Write the PILlow Image (img) to disk."""

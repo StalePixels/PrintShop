@@ -5,12 +5,11 @@
 from __future__ import print_function
 
 import time
-import sys
+import os
 
-from escpos.printer import Usb as Escpos
+from escpos.printer import Usb as ESCposUSBInterface
 
 from includes.DummyPrinter import DummyPrinter
-
 '''
 ESCpos driver is provided as-is, and is for demonstration
 purposes only. Stale Pixels, or Xalior takes no responsibility
@@ -31,6 +30,7 @@ class ESCpos(DummyPrinter):
 
     def __init__(self, logger):
         DummyPrinter.__init__(self,logger)
+        self.ESCposPrinter = ESCposUSBInterface(self.USB_VENDOR_ID, self.USB_DEVICE_ID)
 
     def print(self, input_buffer, opts):
         img = DummyPrinter.print(self, input_buffer, opts)
@@ -42,11 +42,14 @@ class ESCpos(DummyPrinter):
         # I am a mono printer, I INSIST this is a mono image...
         img = img.convert("1")
 
-        tmp = int(round(time.time() * 1000)).__str__()
-        img.save(tmp+".png")
+        print(opts.args.temppath)
 
-        Epson = Escpos(self.USB_VENDOR_ID, self.USB_DEVICE_ID)
-        Epson.image(tmp+".png", True, True, u'bitImageColumn')
+        tmpfile = opts.args.temppath + os.path.sep + int(round(time.time() * 1000)).__str__() + ".png"
+        img.save(tmpfile)
+
+        self.ESCposPrinter.image(tmpfile, True, True, u'bitImageColumn')
+
+        os.remove(tmpfile)
 
 
 
