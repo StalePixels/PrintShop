@@ -24,23 +24,13 @@ Copyright (c) 2014 Able Systems Limited. All rights reserved.
 Copyright (c) 2019 Stale Pixels.         Some rights reserved.
 
 '''
-import argparse
-import logging
-import platform
 import struct
-import sys
-import time
-from PIL import Image
 
 import usb.core
 import usb.util
 
-import socket
-
-from formats.ZXGraphics import ZXScreen, ZXImage
 from includes.DummyPrinter import DummyPrinter
 
-from array import array
 from bitarray import bitarray
 
 '''
@@ -60,8 +50,6 @@ USB_PRODUCT_IDS = {PIPSTA_USB_PRODUCT_ID, AP1400_USB_PRODUCT_ID, AP1400V_USB_PRO
 
 # Pipsta specific printer commands, defined here for ease of use
 PIPSTA_SET_FONT_MODE_3 = b'\x1b!\x03'
-PIPSTA_SET_LED_MODE = b'\x1bX\x2d'
-PIPSTA_FEED_PAST_CUTTER = b'\n' * 5
 PIPSTA_SELECT_SDL_GRAPHICS = b'\x1b*\x08'
 PIPSTA_USB_BUSY = 66
 
