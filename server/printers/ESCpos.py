@@ -4,16 +4,6 @@
 #
 from __future__ import print_function
 
-HOST = ''
-PORT = 65432
-
-'''ESCpos driver is provided as-is, and is for demonstration
-purposes only. Stale Pixels, or Xalior takes no responsibility
-for any system implementations based on this code.
-
-Copyright (c) 2019 Stale Pixels.         Some rights reserved.
-
-'''
 import time
 import sys
 
@@ -21,6 +11,13 @@ from escpos.printer import Usb as Escpos
 
 from includes.DummyPrinter import DummyPrinter
 
+'''
+ESCpos driver is provided as-is, and is for demonstration
+purposes only. Stale Pixels, or Xalior takes no responsibility
+for any system implementations based on this code.
+
+Copyright (c) 2019 Stale Pixels.         Some rights reserved.
+'''
 class ESCpos(DummyPrinter):
     MAX_PRINTER_DOTS_PER_LINE = 384
 
@@ -30,6 +27,7 @@ class ESCpos(DummyPrinter):
     # USB specific constant definitions
     USB_VENDOR_ID = 0x0416
     USB_DEVICE_ID = 0x5011  # Zjiang POS Thermal Printer Mini 58mm USB - https://www.aliexpress.com/item/1000006163834.html
+
 
     def __init__(self, logger):
         DummyPrinter.__init__(self,logger)

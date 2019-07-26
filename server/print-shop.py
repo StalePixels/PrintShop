@@ -17,23 +17,20 @@ from __future__ import print_function
 HOST = ''
 PORT = 65432
 
-'''PrintShop is provided as-is, and is for demonstration
+"""
+PrintShop is provided as-is, and is for demonstration
 purposes only. Stale Pixels, or Xalior takes no responsibility
 for any system implementations based on this code.
 
 Copyright (c) 2019 Stale Pixels.         Some rights reserved.
+"""
 
-'''
 import argparse
 import logging
 import platform
 import sys
-import time
 import socket
 from array import array
-from bitarray import bitarray
-
-from PIL import Image
 
 # Our CONSTS and Configs
 from includes.Options import *
@@ -48,7 +45,9 @@ Printer = 'ImageWriter'
 LOGGER = logging.getLogger('PrintShop')
 
 def setup_logging(opts):
-    '''Sets up logging for the application.'''
+    """
+    Sets up logging for the application.
+    """
 
     LOGGER.setLevel(logging.INFO)
 
@@ -65,7 +64,9 @@ def setup_logging(opts):
 
 
 def parse_arguments():
-    """Parse the arguments passed to the script, logging, fonts, printer type, etc..."""
+    """
+    Parse the arguments passed to the script, logging, fonts, printer type, etc...
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('--font', '-f', type=str, dest='font',
                         help='Optional 1bit-mapped font (not yet used)',
@@ -92,8 +93,10 @@ def parse_arguments():
     return args
 
 def main():
-    """The main loop of the application.  Wrapping the code in a function
-    may be useful if we ever want to librarise, and import the file elsewhere later."""
+    """
+    The main loop of the application.  Wrapping the code in a function
+    may be useful if we ever want to librarise, and import the file elsewhere later.
+    """
 
     # We support Python2, because that's most likely to be on the pi...
     if sys.version_info[0] != 2:

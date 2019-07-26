@@ -3,23 +3,19 @@
 # ImageWriter.py
 #
 from __future__ import print_function
-from formats.ZXGraphics import ZXScreen, ZXImage
-from PIL import Image
-from datetime import datetime
-
 from datetime import datetime
 
 from includes.Options import *
 from includes.DummyPrinter import DummyPrinter
 
-'''ImageWriter driver is provided as-is, and is for demonstration
+'''
+ImageWriter driver is provided as-is, and is for demonstration
 purposes only, a fake printer that writes input to disk. 
 
 Stale Pixels, or Xalior takes no responsibility for any critical
 system implementations based on this code.
 
 Copyright (c) 2019 Stale Pixels.         Some rights reserved.
-
 '''
 
 class ImageWriter(DummyPrinter):
