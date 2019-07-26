@@ -118,7 +118,7 @@ def main():
     try:
         while True:
             s.listen(0)
-            print('Listening with timeout: '+ s.gettimeout().__str__())
+            print('Listening with timeout "'+ s.gettimeout().__str__()+'" printing to "'+opts.printer+'"')
             conn, addr = s.accept()
             print('Connected by', addr)
 
