@@ -74,10 +74,10 @@ def parse_arguments():
                         help='Type of printer, default is the '+Printer,
                         choices=['ImageWriter', 'ESCpos', 'Pipsta'],
                         nargs='?')
-    parser.add_argument('--printer-width', '-p-w', type=int, default=None, dest='printer_width',
+    parser.add_argument('--printer-width', '-pW', type=int, default=None, dest='printer_width',
                         help='Change default output width of printer (not supported by all printers)',
                         nargs='?')
-    parser.add_argument('--printer-height', '-p-h', type=int, default=None, dest='printer_height',
+    parser.add_argument('--printer-height', '-pH', type=int, default=None, dest='printer_height',
                         help='Change default output height of printer (not supported by all printers)',
                         nargs='?')
     parser.add_argument('--log', '-l', type=str, default='ERROR', dest='loglevel',
