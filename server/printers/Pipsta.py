@@ -33,7 +33,7 @@ PIPSTA_SET_FONT_MODE_3 = b'\x1b!\x03'
 PIPSTA_SELECT_SDL_GRAPHICS = b'\x1b*\x08'
 PIPSTA_USB_BUSY = 66
 
-class printer_finder(object):
+class PipstaFinder(object):
     def __call__(self, device):
         if device.idVendor != USB_VENDOR_ID:
             return False
@@ -50,15 +50,15 @@ class Pipsta(DummyPrinter):
 
         # Find the Pipsta's specific Vendor ID and Product ID (also known as vid
         # and pid)
-        dev = usb.core.find(custom_match=printer_finder())
+        dev = usb.core.find(custom_match=PipstaFinder())
         if dev is None:  # if no such device is connected...
-            raise IOError('Printer not found')  # ...report error
+            raise IOError('Pipsta not found')  # ...report error
 
         try:
             dev.reset()
             dev.set_configuration()
         except usb.core.USBError as err:
-            raise IOError('Failed to configure the printer', err)
+            raise IOError('Failed to configure the Pipsta', err)
 
         # Get a handle to the active interface
         cfg = dev.get_active_configuration()
@@ -78,7 +78,7 @@ class Pipsta(DummyPrinter):
         )
 
         if self._ep_out is None:  # check we have a real endpoint handle
-            raise IOError('Could not find an endpoint to print to')
+            raise IOError('Could not find an the Pipsta endpoint to print to')
 
     def print(self, input_buffer, opts):
         img = DummyPrinter.print(self, input_buffer, opts)
@@ -86,7 +86,8 @@ class Pipsta(DummyPrinter):
 
     def _print_image(self, img, opts):
         """
-        Reads the img and sends it a dot line at once to the printer
+        Converts the img to 24bit Bmp format then squirt it to the
+        printer, inverted, in bytes... This is the Pipsta spec :-/
         """
         data = bitarray(img.getdata(), endian='big')
         data.invert()
@@ -109,4 +110,3 @@ class Pipsta(DummyPrinter):
 # and always imported as a module. Prevents accidental execution of code.
 if __name__ == '__main__':
     raise SystemExit
-
