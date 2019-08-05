@@ -42,11 +42,19 @@ class ImageWriter(DummyPrinter):
             self._print_image(printjob, opts)
 
     def _text(self, text, opts):
+        """
+        Write the text, in text, to an img to disk?
+
+        Naaaa, son. Not on this day...
+        """
         print("text: "+text)
         raise Exception
 
     def _print_image(self, img, opts):
-        """Write the PILlow Image (img) to disk."""
+        """
+        Write the PILlow Image (img) to disk - filename is based on time based on "PrintShop-YYYYMMDDhhmmss.png"
+        in the working dir (the dir you were in when you launched print-shop.py) by default
+        """
         img.save("PrintShop-"+datetime.now().strftime("%Y%m%d%H%M%S")+".png")
 
 # Trap running this by itself

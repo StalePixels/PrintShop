@@ -10,6 +10,7 @@ import usb.util
 
 from bitarray import bitarray
 
+from includes.Options import *
 from includes.DummyPrinter import DummyPrinter
 
 '''
@@ -80,8 +81,12 @@ class Pipsta(DummyPrinter):
             raise IOError('Could not find an the Pipsta endpoint to print to')
 
     def print(self, input_buffer, opts):
-        img = DummyPrinter.print(self, input_buffer, opts)
-        self._print_image(img, opts)
+        printjob = DummyPrinter.print(self, input_buffer, opts)
+
+        if opts.mode == PRINT_MODE_TXT:
+            self._print_text(printjob, opts)
+        else:
+            self._print_image(printjob, opts)
 
     def _print_image(self, img, opts):
         """

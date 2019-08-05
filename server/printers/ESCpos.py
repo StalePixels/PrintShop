@@ -9,6 +9,7 @@ import os
 
 from escpos.printer import Usb as ESCposUSBInterface
 
+from includes.Options import *
 from includes.DummyPrinter import DummyPrinter
 '''
 ESCpos driver is provided as-is, and is for demonstration
@@ -33,16 +34,18 @@ class ESCpos(DummyPrinter):
         self.ESCposPrinter = ESCposUSBInterface(self.USB_VENDOR_ID, self.USB_DEVICE_ID)
 
     def print(self, input_buffer, opts):
-        img = DummyPrinter.print(self, input_buffer, opts)
-        self._print_image(img, opts)
+        printjob = DummyPrinter.print(self, input_buffer, opts)
+
+        if opts.mode == PRINT_MODE_TXT:
+            self._print_text(printjob, opts)
+        else:
+            self._print_image(printjob, opts)
 
     def _print_image(self, img, opts):
         """Take the PILlow image, and convert to ESC format, and print"""
 
         # I am a mono printer, I INSIST this is a mono image...
         img = img.convert("1")
-
-        print(opts.args.temppath)
 
         tmpfile = opts.args.temppath + os.path.sep + int(round(time.time() * 1000)).__str__() + ".png"
         img.save(tmpfile)
