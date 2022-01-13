@@ -1,5 +1,5 @@
 configparser==3.5.0b2
-Pillow==6.1.0
+Pillow==9.0.0
 pyserial==3.4
 python-escpos==2.2.0
 pyusb==1.0.2
